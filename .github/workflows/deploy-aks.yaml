@@ -27,14 +27,20 @@ jobs:
                 echo Y | sfdx plugins:install sfdx-git-delta
                 sfdx plugins
 
-          - name: 'Create delta packages'
-            run: | 
-                mkdir changed-sources
-                sf sgd source delta --to "HEAD" --from "HEAD~1" --output changed-sources/ --generate-delta --source force-app/
-                echo "[INFO] Diff generated"
+          - name: Create delta packages
+  run: |
+      mkdir -p changed-sources
+      if git rev-parse HEAD~1 >/dev/null 2>&1; then
+        echo "Previous commit found — generating delta"
+        sf sgd source delta --to HEAD --from HEAD~1 --output-dir changed-sources --generate-delta --source-dir force-app
+      else
+        echo "First commit detected — deploying full source"
+        cp -r force-app changed-sources/
+      fi
+      echo "[INFO] Diff generated"
                 
-          - name: 'Deploy to environment with running all local tests'
-            run: |
-                echo "${{ secrets.JWT_SERVER_KEY }}" > server.key
-                sf org login jwt --username ${{ secrets.DEPLOYMENT_USER_NAME }} --jwt-key-file server.key --client-id ${{ secrets.CONSUMER_KEY }} --instance-url ${{ vars.INSTANCE_URL }} --set-default
-                sf project deploy start --source-dir changed-sources/force-app --test-level RunLocalTests
+         - name: Deploy to environment with running all local tests
+  run: |
+      echo "${{ secrets.JWT_SERVER_KEY }}" > server.key
+      sf org login jwt --username ${{ secrets.DEPLOYMENT_USER_NAME }} --jwt-key-file server.key --client-id ${{ secrets.CONSUMER_KEY }} --instance-url ${{ vars.INSTANCE_URL }} --set-default
+      sf project deploy start --source-dir changed-sources/force-app --test-level RunLocalTests
