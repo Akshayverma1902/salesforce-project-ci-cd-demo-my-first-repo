@@ -14,7 +14,7 @@ export default class CustomForm extends LightningElement {
 
     handleAmount(event){
         this.amount = event.target.value;
-    }
+   }
 
     handleCloseDate(event){
         this.closeDate = event.target.value;
