@@ -1,0 +1,8 @@
+<template>
+    <div class="slds-p-around_medium">
+        <h1>{title}</h1>
+        <lightning-input label="Name" value={name} onchange={handleNameChange}></lightning-input>
+        <lightning-button variant="brand" label="Say Hello" onclick={sayHello}></lightning-button>
+        <p if:true={greeting}>{greeting}</p>
+    </div>
+</template>

@@ -7,11 +7,10 @@ on:
       - 'force-app/**'
 
 jobs:
-  deploy-to-org:
-    runs-on: ubuntu-latest
-    # Removed the GitHub environment gate so the workflow will deploy
-    # to the org specified by the `DEPLOYMENT_USER_NAME` secret.
-    steps:
+  Deploy-to-sffnoobs-environment:
+      runs-on: ubuntu-latest
+      environment: sffnoobs
+      steps:
           - uses: actions/setup-node@v3
             with:
               node-version: '18'
