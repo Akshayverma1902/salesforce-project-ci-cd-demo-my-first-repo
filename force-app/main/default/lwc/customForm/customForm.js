@@ -5,7 +5,7 @@ import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 export default class CustomForm extends LightningElement {
 
     @track name;
-   // @track amount;
+  @track amount;
     @track phone;
     @track closeDate;
 
@@ -13,9 +13,9 @@ export default class CustomForm extends LightningElement {
         this.name = event.target.value;
     }
 
-//     handleAmount(event){
-//         this.amount = event.target.value;
-//    }
+    handleAmount(event){
+        this.amount = event.target.value;
+   }
    
      handlephone(event){
         this.phone = event.target.value;
