@@ -8,69 +8,57 @@ on:
 
 jobs:
   Deploy-to-sffnoobs-environment:
-      runs-on: ubuntu-latest
-      environment: sffnoobs
-      steps:
-          - uses: actions/setup-node@v3
-            with:
-              node-version: '18'
+    runs-on: ubuntu-latest
+    environment: sffnoobs
 
-          - name: 'Checkout source code'
-            uses: actions/checkout@v3
-            with:
-              fetch-depth: '2'
-                
-          - name: 'Install sfdx'
-            run: npm install @salesforce/cli --global
+    steps:
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '18'
 
-          - name: 'Installing sfdx git delta'
-            run: | 
-                echo Y | sfdx plugins:install sfdx-git-delta
-                sfdx plugins
+      - name: Checkout source code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 2
 
-          # 🔹 Login First (needed before disabling validation rules)
-          - name: 'Login to Org'
-            run: |
-                echo "${{ secrets.JWT_SERVER_KEY }}" > server.key
-                sf org login jwt \
-                --username ${{ secrets.DEPLOYMENT_USER_NAME }} \
-                --jwt-key-file server.key \
-                --client-id ${{ secrets.CONSUMER_KEY }} \
-                --instance-url ${{ vars.INSTANCE_URL }} \
-                --set-default
+      - name: Install Salesforce CLI
+        run: npm install @salesforce/cli --global
 
-          # 🔹 STEP 1: Disable Validation Rules Before Deploy
-          - name: 'Disable Validation Rules Before Deploy'
-            run: |
-                echo "[INFO] Disabling validation rules..."
-                sf data update record \
-                --sobject ValidationRule \
-                --where "Active=true" \
-                --values "Active=false"
+      - name: Install sfdx git delta
+        run: |
+          echo Y | sf plugins install sfdx-git-delta
 
-          - name: 'Create delta packages'
-            run: | 
-                mkdir changed-sources
-                sf sgd source delta \
-                --to "HEAD" \
-                --from "HEAD~1" \
-                --output changed-sources/ \
-                --generate-delta \
-                --source force-app/
-                echo "[INFO] Diff generated"
+      - name: Login to Org
+        run: |
+          echo "${{ secrets.JWT_SERVER_KEY }}" > server.key
+          sf org login jwt \
+            --username ${{ secrets.DEPLOYMENT_USER_NAME }} \
+            --jwt-key-file server.key \
+            --client-id ${{ secrets.CONSUMER_KEY }} \
+            --instance-url ${{ vars.INSTANCE_URL }} \
+            --set-default
 
-          - name: 'Deploy to environment with running all local tests'
-            run: |
-                sf project deploy start \
-                --source-dir changed-sources/force-app \
-                --test-level RunLocalTests
+      - name: Create delta packages
+        run: |
+          mkdir changed-sources
+          sf sgd source delta \
+            --to "HEAD" \
+            --from "HEAD~1" \
+            --output changed-sources/ \
+            --generate-delta \
+            --source force-app/
 
-          # 🔹 STEP 2: Re-Enable Validation Rules After Deploy
-          - name: 'Re-Enable Validation Rules After Deploy'
-            if: success()
-            run: |
-                echo "[INFO] Re-enabling validation rules..."
-                sf data update record \
-                --sobject ValidationRule \
-                --where "Active=false" \
-                --values "Active=true"
+      # ✅ STEP 1: VALIDATE DEPLOY (Dry Run)
+      - name: Validate Deployment
+        run: |
+          sf project deploy start \
+            --source-dir changed-sources/force-app \
+            --test-level RunLocalTests \
+            --dry-run
+
+      # ✅ STEP 2: ACTUAL DEPLOY (Only if validation passes)
+      - name: Deploy to environment
+        run: |
+          sf project deploy start \
+            --source-dir changed-sources/force-app \
+            --test-level RunLocalTests
