@@ -48,6 +48,13 @@ jobs:
             --generate-delta \
             --source force-app/
 
+      - name: Validate Deployment
+        run: |
+          sf project deploy start \
+            --source-dir changed-sources/force-app \
+            --test-level RunLocalTests \
+            --dry-run
+
       - name: Deploy to DEV
         run: |
           sf project deploy start \
