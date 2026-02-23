@@ -1,4 +1,4 @@
-name: Deploy to DEV
+name: Deploy to DEV on feature branch push
 
 on:
   push:
@@ -48,9 +48,15 @@ jobs:
             --generate-delta \
             --source force-app/
 
+      - name: Validate Deployment
+        run: |
+          sf project deploy start \
+            --source-dir changed-sources/force-app \
+            --test-level RunLocalTests \
+            --dry-run
+
       - name: Deploy to DEV
         run: |
           sf project deploy start \
-            --manifest changed-sources/package/package.xml \
-            --test-level RunLocalTests \
-            --wait 30
+            --source-dir changed-sources/force-app \
+            --test-level RunLocalTests

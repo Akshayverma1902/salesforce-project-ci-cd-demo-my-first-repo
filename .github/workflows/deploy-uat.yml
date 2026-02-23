@@ -1,4 +1,4 @@
-name: Deploy to UAT on dev branch push
+name: Deploy to UAT
 
 on:
   push:
@@ -35,7 +35,7 @@ jobs:
             --username ${{ secrets.DEPLOYMENT_USER_NAME }} \
             --jwt-key-file server.key \
             --client-id ${{ secrets.CONSUMER_KEY }} \
-            --instance-url ${{ vars.INSTANCE_URL }} \
+            --instance-url ${{ vars.UAT_INSTANCE_URL }} \
             --set-default
 
       - name: Create delta packages
@@ -48,15 +48,9 @@ jobs:
             --generate-delta \
             --source force-app/
 
-      - name: Validate Deployment
-        run: |
-          sf project deploy start \
-            --source-dir changed-sources/force-app \
-            --test-level RunLocalTests \
-            --dry-run
-
       - name: Deploy to UAT
         run: |
           sf project deploy start \
-            --source-dir changed-sources/force-app \
-            --test-level RunLocalTests
+            --manifest changed-sources/package/package.xml \
+            --test-level RunLocalTests \
+            --wait 30
