@@ -30,12 +30,12 @@ jobs:
 
       - name: Login to DEV Org
         run: |
-          echo "${{ secrets.JWT_SERVER_KEY }}" > server.key
+          echo "${{ secrets.JWT_SERVER_KEY_DEV }}" > server.key
           sf org login jwt \
-            --username ${{ secrets.DEPLOYMENT_USER_NAME }} \
+            --username ${{ secrets.DEPLOYMENT_USER_NAME_DEV }} \
             --jwt-key-file server.key \
-            --client-id ${{ secrets.CONSUMER_KEY }} \
-            --instance-url ${{ vars.INSTANCE_URL }} \
+            --client-id ${{ secrets.CONSUMER_KEY_DEV }} \
+            --instance-url https://login.salesforce.com \
             --set-default
 
       - name: Create delta packages
