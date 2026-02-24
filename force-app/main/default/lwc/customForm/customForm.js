@@ -5,19 +5,44 @@ import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 export default class CustomForm extends LightningElement {
 
     @track name;
- 
+  @track amount;
+    @track phone;
     @track closeDate;
 
-   
+    handleName(event){
+        this.name = event.target.value;
+    }
 
     handleAmount(event){
         this.amount = event.target.value;
    }
    
-    
+     handlephone(event){
+        this.phone = event.target.value;
+   }
+
+    handleCloseDate(event){
+        this.closeDate = event.target.value;
+    }
 
     handleSave(){
-       
-       
+        createOpportunity({
+            name : this.name,
+            amount : this.amount,
+            phone : this.phone,
+            closeDate : this.closeDate
+        })
+        .then(() => {
+            this.dispatchEvent(
+                new ShowToastEvent({
+                    title: 'Success',
+                    message: 'Opportunity Created',
+                    variant: 'success'
+                })
+            );
+        })
+        .catch(error => {
+            console.error(error);
+        });//commit
     }
 }
