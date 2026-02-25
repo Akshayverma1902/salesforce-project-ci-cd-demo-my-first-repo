@@ -23,12 +23,8 @@ export default class CustomForm extends LightningElement {
     handleSave(){
         createOpportunity({
             name : this.name,
-<<<<<<< HEAD
-            amount : this.amounty,
             phone : this.phone,
-=======
             amount : this.amount,
->>>>>>> dev
             closeDate : this.closeDate
         })
         .then(() => {
