@@ -1,22 +1,22 @@
-name: PR Validate and Deploy to PROD
+name: PR Validate and Deploy to UAT
 
 on:
   pull_request:
     branches:
-      - 'main'
+      - 'uat'
     paths:
       - 'force-app/**'
   push:
     branches:
-      - 'main'
+      - 'uat'
     paths:
       - 'force-app/**'
 
 jobs:
-  Validate-for-PROD:
+  Validate-for-UAT:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
-    environment: sffnoobs
+    environment: uat
 
     steps:
       - uses: actions/setup-node@v3
@@ -34,13 +34,13 @@ jobs:
       - name: Install sfdx git delta
         run: echo Y | sf plugins install sfdx-git-delta
 
-      - name: Login to PROD Org
+      - name: Login to UAT Org
         run: |
-          echo "${{ secrets.JWT_SERVER_KEY_PRO }}" > server.key
+          echo "${{ secrets.JWT_SERVER_KEY_UAT }}" > server.key
           sf org login jwt \
-            --username ${{ secrets.DEPLOYMENT_USER_NAME_PRO }} \
+            --username ${{ secrets.DEPLOYMENT_USER_NAME_UAT }} \
             --jwt-key-file server.key \
-            --client-id ${{ secrets.CONSUMER_KEY_PRO }} \
+            --client-id ${{ secrets.CONSUMER_KEY_UAT }} \
             --instance-url https://login.salesforce.com \
             --set-default
 
@@ -54,7 +54,7 @@ jobs:
             --generate-delta \
             --source force-app/
 
-      - name: Validate on PROD (Dry Run)
+      - name: Validate on UAT (Dry Run)
         run: |
           sf project deploy start \
             --manifest changed-sources/package/package.xml \
@@ -62,10 +62,10 @@ jobs:
             --dry-run \
             --wait 30
 
-  Deploy-to-PROD:
+  Deploy-to-UAT:
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
-    environment: sffnoobs
+    environment: uat
 
     steps:
       - uses: actions/setup-node@v3
@@ -83,13 +83,13 @@ jobs:
       - name: Install sfdx git delta
         run: echo Y | sf plugins install sfdx-git-delta
 
-      - name: Login to PROD Org
+      - name: Login to UAT Org
         run: |
-          echo "${{ secrets.JWT_SERVER_KEY_PRO }}" > server.key
+          echo "${{ secrets.JWT_SERVER_KEY_UAT }}" > server.key
           sf org login jwt \
-            --username ${{ secrets.DEPLOYMENT_USER_NAME_PRO }} \
+            --username ${{ secrets.DEPLOYMENT_USER_NAME_UAT }} \
             --jwt-key-file server.key \
-            --client-id ${{ secrets.CONSUMER_KEY_PRO }} \
+            --client-id ${{ secrets.CONSUMER_KEY_UAT }} \
             --instance-url https://login.salesforce.com \
             --set-default
 
@@ -103,7 +103,7 @@ jobs:
             --generate-delta \
             --source force-app/
 
-      - name: Deploy to PROD
+      - name: Deploy to UAT
         run: |
           sf project deploy start \
             --manifest changed-sources/package/package.xml \
