@@ -1,16 +1,16 @@
-name: Deploy to MAIN
+name: PR Validation for PROD
 
 on:
-  push:
+  pull_request:
     branches:
-      - 'uat'
+      - 'main'
     paths:
       - 'force-app/**'
 
 jobs:
-  Deploy-to-main:
+  Validate-for-PROD:
     runs-on: ubuntu-latest
-    environment: main
+    environment: sffnoobs
 
     steps:
       - uses: actions/setup-node@v3
@@ -20,7 +20,7 @@ jobs:
       - name: Checkout source code
         uses: actions/checkout@v3
         with:
-          fetch-depth: 2
+          fetch-depth: 0
 
       - name: Install Salesforce CLI
         run: npm install @salesforce/cli --global
@@ -28,14 +28,14 @@ jobs:
       - name: Install sfdx git delta
         run: echo Y | sf plugins install sfdx-git-delta
 
-      - name: Login to MAIN Org
+      - name: Login to PROD Org
         run: |
-          echo "${{ secrets.JWT_SERVER_KEY }}" > server.key
+          echo "${{ secrets.JWT_SERVER_KEY_PRO }}" > server.key
           sf org login jwt \
-            --username ${{ secrets.DEPLOYMENT_USER_NAME }} \
+            --username ${{ secrets.DEPLOYMENT_USER_NAME_PRO }} \
             --jwt-key-file server.key \
-            --client-id ${{ secrets.CONSUMER_KEY }} \
-            --instance-url ${{ vars.MAIN_INSTANCE_URL }} \
+            --client-id ${{ secrets.CONSUMER_KEY_PRO }} \
+            --instance-url https://login.salesforce.com \
             --set-default
 
       - name: Create delta packages
@@ -43,14 +43,15 @@ jobs:
           mkdir changed-sources
           sf sgd source delta \
             --to "HEAD" \
-            --from "HEAD~1" \
+            --from "origin/${{ github.base_ref }}" \
             --output changed-sources/ \
             --generate-delta \
             --source force-app/
 
-      - name: Deploy to MAIN
+      - name: Validate Deployment (Dry Run)
         run: |
           sf project deploy start \
             --manifest changed-sources/package/package.xml \
             --test-level RunLocalTests \
+            --dry-run \
             --wait 30

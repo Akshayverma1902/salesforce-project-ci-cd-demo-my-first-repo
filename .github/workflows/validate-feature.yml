@@ -1,16 +1,16 @@
-name: Deploy to MAIN
+name: Validate Feature Branch on UAT
 
 on:
   push:
     branches:
-      - 'uat'
+      - 'feature/**'
     paths:
       - 'force-app/**'
 
 jobs:
-  Deploy-to-main:
+  Validate-on-UAT:
     runs-on: ubuntu-latest
-    environment: main
+    environment: uat
 
     steps:
       - uses: actions/setup-node@v3
@@ -28,14 +28,14 @@ jobs:
       - name: Install sfdx git delta
         run: echo Y | sf plugins install sfdx-git-delta
 
-      - name: Login to MAIN Org
+      - name: Login to UAT Org
         run: |
-          echo "${{ secrets.JWT_SERVER_KEY }}" > server.key
+          echo "${{ secrets.JWT_SERVER_KEY_UAT }}" > server.key
           sf org login jwt \
-            --username ${{ secrets.DEPLOYMENT_USER_NAME }} \
+            --username ${{ secrets.DEPLOYMENT_USER_NAME_UAT }} \
             --jwt-key-file server.key \
-            --client-id ${{ secrets.CONSUMER_KEY }} \
-            --instance-url ${{ vars.MAIN_INSTANCE_URL }} \
+            --client-id ${{ secrets.CONSUMER_KEY_UAT }} \
+            --instance-url https://login.salesforce.com \
             --set-default
 
       - name: Create delta packages
@@ -48,9 +48,10 @@ jobs:
             --generate-delta \
             --source force-app/
 
-      - name: Deploy to MAIN
+      - name: Validate on UAT (Dry Run)
         run: |
           sf project deploy start \
             --manifest changed-sources/package/package.xml \
             --test-level RunLocalTests \
+            --dry-run \
             --wait 30

@@ -1,16 +1,16 @@
-name: Deploy to MAIN
+name: Deploy to DEV
 
 on:
   push:
     branches:
-      - 'uat'
+      - 'feature/**'
     paths:
       - 'force-app/**'
 
 jobs:
-  Deploy-to-main:
+  Deploy-to-dev:
     runs-on: ubuntu-latest
-    environment: main
+    environment: dev
 
     steps:
       - uses: actions/setup-node@v3
@@ -28,14 +28,14 @@ jobs:
       - name: Install sfdx git delta
         run: echo Y | sf plugins install sfdx-git-delta
 
-      - name: Login to MAIN Org
+      - name: Login to DEV Org
         run: |
-          echo "${{ secrets.JWT_SERVER_KEY }}" > server.key
+          echo "${{ secrets.JWT_SERVER_KEY_DEV }}" > server.key
           sf org login jwt \
-            --username ${{ secrets.DEPLOYMENT_USER_NAME }} \
+            --username ${{ secrets.DEPLOYMENT_USER_NAME_DEV }} \
             --jwt-key-file server.key \
-            --client-id ${{ secrets.CONSUMER_KEY }} \
-            --instance-url ${{ vars.MAIN_INSTANCE_URL }} \
+            --client-id ${{ secrets.CONSUMER_KEY_DEV }} \
+            --instance-url https://login.salesforce.com \
             --set-default
 
       - name: Create delta packages
@@ -48,7 +48,15 @@ jobs:
             --generate-delta \
             --source force-app/
 
-      - name: Deploy to MAIN
+      - name: Validate Deployment (Dry Run)
+        run: |
+          sf project deploy start \
+            --manifest changed-sources/package/package.xml \
+            --test-level RunLocalTests \
+            --dry-run \
+            --wait 30
+
+      - name: Deploy to DEV
         run: |
           sf project deploy start \
             --manifest changed-sources/package/package.xml \
