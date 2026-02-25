@@ -1,11 +1,3 @@
-name: Deploy to sffnoobs environment on push to main
-
-on:
-  push:
-    branches: [ main ]
-    paths:
-      - 'force-app/**'
-
 jobs:
   Deploy-to-sffnoobs-environment:
     runs-on: ubuntu-latest
