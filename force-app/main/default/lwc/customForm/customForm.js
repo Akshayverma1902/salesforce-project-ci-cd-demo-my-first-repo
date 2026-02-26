@@ -7,7 +7,7 @@ export default class CustomForm extends LightningElement {
     @track name;
    @track amount;
     @track phone;
-    @track closeDate;
+    @track closeDatedd;
 
     handleName(event){
         this.name = event.target.value;
