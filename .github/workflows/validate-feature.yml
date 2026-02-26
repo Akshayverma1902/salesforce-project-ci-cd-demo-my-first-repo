@@ -1,14 +1,15 @@
-name: Validate Feature Branch on UAT
+name: Validate Feature Branch on UAT PR
 
 on:
-  push:
+  pull_request:
     branches:
-      - 'feature/**'
+      - uat
     paths:
       - 'force-app/**'
 
 jobs:
   Validate-on-UAT:
+    if: startsWith(github.head_ref, 'feature/')
     runs-on: ubuntu-latest
     environment: uat
 
@@ -20,7 +21,7 @@ jobs:
       - name: Checkout source code
         uses: actions/checkout@v3
         with:
-          fetch-depth: 2
+          fetch-depth: 0
 
       - name: Install Salesforce CLI
         run: npm install @salesforce/cli --global
@@ -43,7 +44,7 @@ jobs:
           mkdir changed-sources
           sf sgd source delta \
             --to "HEAD" \
-            --from "HEAD~1" \
+            --from "origin/uat" \
             --output changed-sources/ \
             --generate-delta \
             --source force-app/
