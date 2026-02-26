@@ -1,0 +1,57 @@
+name: PR Validation for UAT
+
+on:
+  pull_request:
+    branches:
+      - 'dev'
+    paths:
+      - 'force-app/**'
+
+jobs:
+  Validate-for-UAT:
+    runs-on: ubuntu-latest
+    environment: uat
+
+    steps:
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Checkout source code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Install Salesforce CLI
+        run: npm install @salesforce/cli --global
+
+      - name: Install sfdx git delta
+        run: echo Y | sf plugins install sfdx-git-delta
+
+      - name: Login to UAT Org
+        run: |
+          echo "${{ secrets.JWT_SERVER_KEY_UAT }}" > server.key
+          sf org login jwt \
+            --username ${{ secrets.DEPLOYMENT_USER_NAME_UAT }} \
+            --jwt-key-file server.key \
+            --client-id ${{ secrets.CONSUMER_KEY_UAT }} \
+            --instance-url https://login.salesforce.com \
+            --set-default
+
+      - name: Create delta packages
+        run: |
+          mkdir changed-sources
+          sf sgd source delta \
+            --to "HEAD" \
+            --from "origin/${{ github.base_ref }}" \
+            --output changed-sources/ \
+            --generate-delta \
+            --source force-app/
+
+      - name: Validate Deployment (Dry Run)
+        run: |
+          sf project deploy start \
+            --manifest changed-sources/package/package.xml \
+            --test-level RunLocalTests \
+            --dry-run \
+            --wait 30
